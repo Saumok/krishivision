@@ -75,7 +75,7 @@ export default function CameraView({ onCapture, onClose }: CameraViewProps) {
   }
 
   return (
-    <div className="relative w-full bg-black" style={{ aspectRatio: "4/3" }}>
+    <div className="relative w-full h-[calc(100svh-60px)] bg-black flex flex-col justify-center overflow-hidden">
       {/* Camera feed */}
       <Webcam
         ref={webcamRef}
