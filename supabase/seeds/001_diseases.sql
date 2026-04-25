@@ -1,0 +1,45 @@
+-- ============================================================
+-- KrishiVision — Disease Seed Data (38 classes)
+-- Run AFTER 001_initial_schema.sql
+-- ============================================================
+
+INSERT INTO public.diseases (slug, model_class_idx, name_en, crop_en, is_healthy, severity) VALUES
+  ('apple-scab',               0,  'Apple Scab',                            'Apple',       false, 'high'),
+  ('apple-black-rot',          1,  'Black Rot',                             'Apple',       false, 'high'),
+  ('apple-cedar-rust',         2,  'Cedar Apple Rust',                      'Apple',       false, 'medium'),
+  ('apple-healthy',            3,  'Healthy',                               'Apple',       true,  'none'),
+  ('blueberry-healthy',        4,  'Healthy',                               'Blueberry',   true,  'none'),
+  ('cherry-powdery-mildew',    5,  'Powdery Mildew',                        'Cherry',      false, 'medium'),
+  ('cherry-healthy',           6,  'Healthy',                               'Cherry',      true,  'none'),
+  ('corn-cercospora',          7,  'Cercospora Leaf Spot / Gray Leaf Spot', 'Corn',        false, 'medium'),
+  ('corn-common-rust',         8,  'Common Rust',                           'Corn',        false, 'medium'),
+  ('corn-northern-blight',     9,  'Northern Leaf Blight',                  'Corn',        false, 'high'),
+  ('corn-healthy',             10, 'Healthy',                               'Corn',        true,  'none'),
+  ('grape-black-rot',          11, 'Black Rot',                             'Grape',       false, 'high'),
+  ('grape-esca',               12, 'Esca (Black Measles)',                  'Grape',       false, 'high'),
+  ('grape-leaf-blight',        13, 'Leaf Blight (Isariopsis Leaf Spot)',    'Grape',       false, 'medium'),
+  ('grape-healthy',            14, 'Healthy',                               'Grape',       true,  'none'),
+  ('orange-huanglongbing',     15, 'Huanglongbing (Citrus Greening)',       'Orange',      false, 'high'),
+  ('peach-bacterial-spot',     16, 'Bacterial Spot',                        'Peach',       false, 'medium'),
+  ('peach-healthy',            17, 'Healthy',                               'Peach',       true,  'none'),
+  ('pepper-bacterial-spot',    18, 'Bacterial Spot',                        'Bell Pepper', false, 'medium'),
+  ('pepper-healthy',           19, 'Healthy',                               'Bell Pepper', true,  'none'),
+  ('potato-early-blight',      20, 'Early Blight',                          'Potato',      false, 'medium'),
+  ('potato-late-blight',       21, 'Late Blight',                           'Potato',      false, 'high'),
+  ('potato-healthy',           22, 'Healthy',                               'Potato',      true,  'none'),
+  ('raspberry-healthy',        23, 'Healthy',                               'Raspberry',   true,  'none'),
+  ('soybean-healthy',          24, 'Healthy',                               'Soybean',     true,  'none'),
+  ('squash-powdery-mildew',    25, 'Powdery Mildew',                        'Squash',      false, 'medium'),
+  ('strawberry-leaf-scorch',   26, 'Leaf Scorch',                           'Strawberry',  false, 'medium'),
+  ('strawberry-healthy',       27, 'Healthy',                               'Strawberry',  true,  'none'),
+  ('tomato-bacterial-spot',    28, 'Bacterial Spot',                        'Tomato',      false, 'medium'),
+  ('tomato-early-blight',      29, 'Early Blight',                          'Tomato',      false, 'medium'),
+  ('tomato-late-blight',       30, 'Late Blight',                           'Tomato',      false, 'high'),
+  ('tomato-leaf-mold',         31, 'Leaf Mold',                             'Tomato',      false, 'medium'),
+  ('tomato-septoria',          32, 'Septoria Leaf Spot',                    'Tomato',      false, 'medium'),
+  ('tomato-spider-mites',      33, 'Spider Mites (Two-spotted)',             'Tomato',      false, 'medium'),
+  ('tomato-target-spot',       34, 'Target Spot',                           'Tomato',      false, 'medium'),
+  ('tomato-yellow-curl-virus', 35, 'Yellow Leaf Curl Virus',                'Tomato',      false, 'high'),
+  ('tomato-mosaic-virus',      36, 'Mosaic Virus',                          'Tomato',      false, 'high'),
+  ('tomato-healthy',           37, 'Healthy',                               'Tomato',      true,  'none')
+ON CONFLICT (slug) DO NOTHING;
