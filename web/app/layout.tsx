@@ -42,8 +42,10 @@ export default function RootLayout({
 }) {
   return (
     <html suppressHydrationWarning>
-      <body className={`${notoSans.variable} font-sans antialiased`}>
-        {children}
+      <body className={`${notoSans.variable} font-sans antialiased bg-gray-100 flex justify-center`}>
+        <div className="w-full max-w-md bg-white min-h-screen relative shadow-2xl overflow-x-hidden">
+          {children}
+        </div>
       </body>
     </html>
   );
