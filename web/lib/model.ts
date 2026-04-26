@@ -7,7 +7,7 @@
 
 import { getClassByIndex } from "./classLabels";
 
-const MODEL_URL = `/model/model.json?v=${Date.now()}`;
+const MODEL_URL = `/model/model.json?v=2`;
 const INPUT_SIZE = 224;
 const CONFIDENCE_THRESHOLD = 0.60;
 const TOP_K = 3;
@@ -28,7 +28,7 @@ export interface InferenceResult {
   isLowConfidence: boolean;
 }
 
-let modelInstance: import("@tensorflow/tfjs").LayersModel | null = null;
+let modelInstance: import("@tensorflow/tfjs").GraphModel | null = null;
 let isLoading = false;
 
 async function loadTfjs() {
@@ -52,23 +52,15 @@ export async function loadModel(): Promise<void> {
   isLoading = true;
   try {
     const tf = await loadTfjs();
-    // Cache-busted URL to bypass Service Worker
-    const modelUrl = `/model/model.json?v=${Date.now()}`;
-    try {
-      modelInstance = await tf.loadLayersModel(modelUrl);
-    } catch (layersErr) {
-      console.warn("[KrishiVision] loadLayersModel failed, trying GraphModel...", layersErr);
-      // Fallback for Keras v3 format issue
-      const graphModel = await tf.loadGraphModel(modelUrl);
-      // Wrap graph model to match LayersModel interface
-      modelInstance = graphModel as unknown as import("@tensorflow/tfjs").LayersModel;
-    }
+    const modelUrl = `/model/model.json?v=2`;
+    console.log("[KrishiVision] Loading GraphModel from", modelUrl);
+    modelInstance = await tf.loadGraphModel(modelUrl);
     // Warm up with a dummy tensor
     const dummy = tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3]);
     const warm = modelInstance.predict(dummy) as import("@tensorflow/tfjs").Tensor;
     warm.dispose();
     dummy.dispose();
-    console.log("[KrishiVision] Model loaded and warmed up.");
+    console.log("[KrishiVision] GraphModel loaded and warmed up.");
   } catch (err) {
     console.error("[KrishiVision] Failed to load model:", err);
     throw err;
