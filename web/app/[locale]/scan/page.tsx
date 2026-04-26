@@ -89,14 +89,14 @@ export default function ScanPage() {
     // First, get disease by slug
     const { data: disease } = await supabase
       .from("diseases")
-      .select("id, name_en, name_localized, crop_en, crop_localized")
+      .select("id, name_en, crop_en")
       .eq("slug", diseaseSlug)
       .single();
 
     if (disease) {
       setLocalizedNames({
-        disease: disease.name_localized || disease.name_en,
-        crop: disease.crop_localized || disease.crop_en,
+        disease: disease.name_en,
+        crop: disease.crop_en,
       });
 
       // Fetch remedy for this disease + locale
