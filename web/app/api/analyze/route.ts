@@ -20,25 +20,25 @@ const SLUGS = [
 
 export async function POST(req: Request) {
   try {
-    const { image } = await req.json(); // base64 string without data:image/jpeg;base64,
+    const { image } = await req.json();
     
-    if (!process.env.GEMINI_API_KEY) {
-      console.error("Missing GEMINI_API_KEY");
-      return NextResponse.json({ error: "Cloud AI configuration missing" }, { status: 500 });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: "GEMINI_API_KEY is not configured on Vercel" }, { status: 500 });
     }
 
+    const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    if (!image) {
+      return NextResponse.json({ error: "No image data provided" }, { status: 400 });
+    }
 
     const prompt = `
       You are an expert plant pathologist. 
-      Analyze this crop image (could be a leaf, fruit, stem, or whole plant). 
-      Identify the disease and map it to the MOST LIKELY slug from this list:
+      Analyze this crop image. Identify the disease and return ONLY the matching slug from this list:
       [${SLUGS.join(", ")}].
-
-      Rules:
-      1. If the plant is NOT in the list (like a mango), still try to find the closest matching disease category or return "tomato-healthy" if it looks fine.
-      2. If it is clearly a specific disease from the list (like Tomato Late Blight on a fruit), return that matching slug.
-      3. Return ONLY the slug name from the list. No other text, no explanation.
+      Return NO other text. If unsure, return 'tomato-healthy'.
     `;
 
     const result = await model.generateContent([
@@ -52,14 +52,17 @@ export async function POST(req: Request) {
     ]);
 
     const response = await result.response;
-    const text = response.text().trim().toLowerCase();
+    const text = response.text().toLowerCase();
     
-    // Validate that the returned text is one of our slugs
+    // Find first matching slug in the response
     const matchedSlug = SLUGS.find(s => text.includes(s)) || "tomato-healthy";
 
     return NextResponse.json({ slug: matchedSlug });
-  } catch (error) {
-    console.error("Gemini API Error:", error);
-    return NextResponse.json({ error: "Failed to analyze image in cloud" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Gemini Error:", error);
+    return NextResponse.json({ 
+      error: "Cloud analysis failed", 
+      details: error.message || "Unknown error" 
+    }, { status: 500 });
   }
 }
