@@ -28,7 +28,7 @@ export interface InferenceResult {
   isLowConfidence: boolean;
 }
 
-let modelInstance: import("@tensorflow/tfjs").GraphModel | null = null;
+let modelInstance: import("@tensorflow/tfjs").LayersModel | null = null;
 let isLoading = false;
 
 async function loadTfjs() {
@@ -52,15 +52,15 @@ export async function loadModel(): Promise<void> {
   isLoading = true;
   try {
     const tf = await loadTfjs();
-    const modelUrl = `/model/model.json?v=2`;
-    console.log("[KrishiVision] Loading GraphModel from", modelUrl);
-    modelInstance = await tf.loadGraphModel(modelUrl);
+    const modelUrl = `/model/model.json?v=3`;
+    console.log("[KrishiVision] Loading model from", modelUrl);
+    modelInstance = await tf.loadLayersModel(modelUrl);
     // Warm up with a dummy tensor
     const dummy = tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3]);
     const warm = modelInstance.predict(dummy) as import("@tensorflow/tfjs").Tensor;
     warm.dispose();
     dummy.dispose();
-    console.log("[KrishiVision] GraphModel loaded and warmed up.");
+    console.log("[KrishiVision] Model loaded and warmed up.");
   } catch (err) {
     console.error("[KrishiVision] Failed to load model:", err);
     throw err;
