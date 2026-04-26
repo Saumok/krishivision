@@ -36,7 +36,8 @@ export async function runCloudInference(imageElement: HTMLImageElement | HTMLCan
 
   if (!response.ok) {
     const err = await response.json();
-    throw new Error(err.error || "Cloud analysis failed");
+    const msg = err.details ? `${err.error}: ${err.details}` : (err.error || "Cloud analysis failed");
+    throw new Error(msg);
   }
 
   const { slug } = await response.json();
