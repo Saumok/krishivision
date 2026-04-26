@@ -36,9 +36,14 @@ export async function POST(req: Request) {
 
     const prompt = `
       You are an expert plant pathologist. 
-      Analyze this crop image. Identify the disease and return ONLY the matching slug from this list:
+      Analyze this crop image. Identify the disease and return ONLY the MOST LIKELY matching slug from this EXACT list:
       [${SLUGS.join(", ")}].
-      Return NO other text. If unsure, return 'tomato-healthy'.
+
+      CRITICAL INSTRUCTIONS:
+      1. You MUST pick ONE string from the array above. Do not invent new slugs.
+      2. If the exact disease is not in the list, pick the 'healthy' slug for that specific crop (e.g., if it is corn smut, pick 'corn-healthy').
+      3. If the crop is completely unknown, return 'tomato-healthy'.
+      4. DO NOT output any other text, no markdown, no quotes, no explanation. Just the exact slug.
     `;
 
     const result = await model.generateContent([
@@ -52,10 +57,18 @@ export async function POST(req: Request) {
     ]);
 
     const response = await result.response;
-    const text = response.text().toLowerCase();
+    const text = response.text().toLowerCase().replace(/[^a-z0-9-]/g, ""); // Strip quotes, whitespace, punctuation
     
-    // Find first matching slug in the response
-    const matchedSlug = SLUGS.find(s => text.includes(s)) || "tomato-healthy";
+    // Find first matching slug
+    let matchedSlug = SLUGS.find(s => s === text || text.includes(s));
+    
+    // Fallback logic if Gemini still hallucinates
+    if (!matchedSlug) {
+      // Try to find the crop name inside whatever text Gemini returned
+      const crops = ["apple", "blueberry", "cherry", "corn", "grape", "orange", "peach", "pepper", "potato", "raspberry", "soybean", "squash", "strawberry", "tomato"];
+      const detectedCrop = crops.find(c => text.includes(c));
+      matchedSlug = detectedCrop ? `${detectedCrop}-healthy` : "corn-healthy";
+    }
 
     return NextResponse.json({ slug: matchedSlug });
   } catch (error: any) {
