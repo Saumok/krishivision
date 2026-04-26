@@ -28,7 +28,12 @@ export async function POST(req: Request) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    let model;
+    try {
+      model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    } catch {
+      model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
+    }
 
     if (!image) {
       return NextResponse.json({ error: "No image data provided" }, { status: 400 });
