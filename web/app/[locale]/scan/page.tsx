@@ -3,19 +3,20 @@ import { useState, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, AlertTriangle, Phone, MessageCircle, ScanLine } from "lucide-react";
+import { Camera, ScanLine, AlertCircle, RefreshCw, Upload, CheckCircle2, ChevronRight, AlertTriangle } from "lucide-react";
 import CameraView from "@/components/scan/CameraView";
 import DiagnosisCard from "@/components/scan/DiagnosisCard";
 import RemedyCard from "@/components/scan/RemedyCard";
 import BottomNav from "@/components/layout/BottomNav";
 import { runInference, fileToImageElement, type InferenceResult } from "@/lib/model";
+import { runCloudInference } from "@/lib/cloudModel";
 import { compressImage } from "@/lib/image-utils";
 import { createClient } from "@/lib/supabase/client";
 import { EXPERT_WHATSAPP, EXPERT_PHONE } from "@/lib/utils";
 import { toast } from "sonner";
 import { uploadScanImage } from "@/lib/image-utils";
 
-type ScanState = "camera" | "preview" | "analyzing" | "result" | "low-confidence";
+type ScanState = "camera" | "preview" | "analyzing" | "cloud-analyzing" | "result" | "low-confidence";
 
 export default function ScanPage() {
   const t = useTranslations("scan");
@@ -82,6 +83,31 @@ export default function ScanPage() {
       clearInterval(progressInterval);
       toast.error(t("noModelText"));
       setState("camera");
+    }
+  };
+
+  const handleCloudAnalyze = async () => {
+    if (!capturedFile) return;
+    setState("cloud-analyzing");
+
+    try {
+      const compressed = await compressImage(capturedFile);
+      const imgEl = await fileToImageElement(compressed);
+      
+      const inferenceResult = await runCloudInference(imgEl);
+      
+      setResult(inferenceResult);
+      
+      if (!inferenceResult.topPrediction.isHealthy) {
+        await fetchRemedy(inferenceResult.topPrediction.slug, locale);
+      }
+
+      logScan(inferenceResult, compressed).catch(console.error);
+      setState("result");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Cloud analysis failed. Using offline model instead.");
+      handleAnalyze();
     }
   };
 
@@ -179,11 +205,23 @@ export default function ScanPage() {
               <h1 className="text-heading-sm font-bold text-white">{t("preview")}</h1>
             </div>
             <img src={previewUrl} alt="preview" className="w-full aspect-[4/3] object-cover" />
-            <div className="p-4 flex flex-col gap-3">
-              <button id="analyze-btn" onClick={handleAnalyze} className="btn-primary">
+            <div className="bg-orange-50/50 border border-orange-200 m-4 p-3 rounded-lg flex items-start gap-3">
+              <AlertTriangle size={20} className="text-orange-500 shrink-0 mt-0.5" />
+              <p className="text-body-sm text-gray-700">
+                <strong className="text-gray-900 block">{t("cloudWarningTitle") || "Scan Leaves, Not Fruits!"}</strong>
+                {t("cloudWarningText") || "Our Krishi AI is trained on 87,000 images of diseased leaves. Scanning fruits or stems may be less accurate."}
+              </p>
+            </div>
+            <div className="px-4 pb-8 space-y-3">
+              <button id="analyze-btn" onClick={handleAnalyze} className="btn-primary w-full">
                 <ScanLine size={22} /> {t("capture")}
               </button>
-              <button id="retake-btn" onClick={handleRetake} className="btn-secondary">
+              
+              <button id="cloud-analyze-btn" onClick={handleCloudAnalyze} className="btn-secondary w-full border-agri-green/30 text-agri-green bg-agri-green/5">
+                ☁️ {t("cloudCta") || "Analyze via Cloud AI"}
+              </button>
+
+              <button id="retake-btn" onClick={handleRetake} className="btn-ghost w-full">
                 {t("retake")}
               </button>
             </div>
@@ -191,37 +229,43 @@ export default function ScanPage() {
         )}
 
         {/* ANALYZING STATE */}
-        {state === "analyzing" && (
+        {(state === "analyzing" || state === "cloud-analyzing") && (
           <motion.div
             key="analyzing"
             className="flex flex-col items-center justify-center min-h-screen gap-8 p-8"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           >
             <div className="relative w-36 h-36">
-              <div className="absolute inset-0 rounded-full border-4 border-agri-green-muted" />
+              <div className="absolute inset-0 rounded-full border-4 border-agri-green-muted opacity-20" />
               <div
                 className="absolute inset-0 rounded-full border-4 border-agri-green border-t-transparent animate-spin"
-                style={{ animationDuration: "1.2s" }}
+                style={{ animationDuration: state === "cloud-analyzing" ? "0.8s" : "1.2s" }}
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-4xl">🔬</span>
+                <span className="text-4xl">{state === "cloud-analyzing" ? "☁️" : "🔬"}</span>
               </div>
             </div>
             <div className="text-center">
-              <h2 className="text-heading-sm font-bold text-gray-800">{t("analyzing")}</h2>
-              <p className="text-body-sm text-gray-500 mt-1">{t("analyzingSubtitle")}</p>
+              <h2 className="text-heading-sm font-bold text-gray-800">
+                {state === "cloud-analyzing" ? "Cloud AI is thinking..." : t("analyzing")}
+              </h2>
+              <p className="text-body-sm text-gray-500 mt-1">
+                {state === "cloud-analyzing" ? "Connecting to advanced agricultural brain" : t("analyzingSubtitle")}
+              </p>
             </div>
-            <div className="w-full max-w-xs">
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-agri-green rounded-full"
-                  initial={{ width: "0%" }}
-                  animate={{ width: `${analyzingProgress}%` }}
-                  transition={{ duration: 0.3 }}
-                />
+            {state === "analyzing" && (
+              <div className="w-full max-w-xs">
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-agri-green rounded-full"
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${analyzingProgress}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+                <p className="text-center text-caption text-gray-400 mt-2">{analyzingProgress}%</p>
               </div>
-              <p className="text-center text-caption text-gray-400 mt-2">{analyzingProgress}%</p>
-            </div>
+            )}
           </motion.div>
         )}
 
@@ -279,12 +323,17 @@ export default function ScanPage() {
               <p className="text-body-sm text-gray-500 mt-2">{t("lowConfidenceText")}</p>
             </div>
             <div className="flex flex-col gap-3 w-full max-w-xs">
-              <a href={`tel:${EXPERT_PHONE}`} className="btn-primary">
-                <Phone size={22} /> {te("callNow")}
-              </a>
-              <a href={EXPERT_WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-secondary">
-                <MessageCircle size={20} /> {te("whatsappNow")}
-              </a>
+              <button onClick={handleCloudAnalyze} className="btn-primary bg-agri-blue hover:bg-agri-blue-dark">
+                 ☁️ {t("tryCloudCta") || "Try Advanced Cloud AI"}
+              </button>
+              <div className="flex gap-2">
+                <a href={`tel:${EXPERT_PHONE}`} className="btn-secondary flex-1">
+                  <Phone size={18} /> {te("callNow")}
+                </a>
+                <a href={EXPERT_WHATSAPP} target="_blank" rel="noopener noreferrer" className="btn-secondary flex-1">
+                  <MessageCircle size={18} /> WhatsApp
+                </a>
+              </div>
               <button onClick={handleRetake} className="btn-ghost">
                 📷 {t("newScan")}
               </button>

@@ -70,7 +70,11 @@
     "shareResult": "Share via WhatsApp",
     "newScan": "New Scan",
     "historyTitle": "Scan History",
-    "noHistory": "No past scans"
+    "noHistory": "No past scans",
+    "cloudCta": "Analyze via Cloud (Fruit/Advanced)",
+    "cloudWarningTitle": "Scan Leaves, Not Fruits!",
+    "cloudWarningText": "Our local Krishi AI is expert at scanning diseased leaves. For fruits or best accuracy, try Cloud AI.",
+    "tryCloudCta": "Try Advanced Cloud AI"
   },
   "diagnosis": {
     "healthy": "Your plant looks healthy! 🎉",
