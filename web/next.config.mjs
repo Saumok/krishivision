@@ -22,16 +22,8 @@ const nextConfig = {
       },
     ],
   },
-  // Allow TF.js to work with WebAssembly
-  headers: async () => [
-    {
-      source: '/(.*)',
-      headers: [
-        { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
-        { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-      ],
-    },
-  ],
+  // Headers for security
+  headers: async () => [],
 };
 
 export default withPWA(withNextIntl(nextConfig));
