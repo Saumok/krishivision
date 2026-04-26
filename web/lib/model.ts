@@ -7,7 +7,7 @@
 
 import { getClassByIndex } from "./classLabels";
 
-const MODEL_URL = "/model/model.json";
+const MODEL_URL = `/model/model.json?v=${Date.now()}`;
 const INPUT_SIZE = 224;
 const CONFIDENCE_THRESHOLD = 0.60;
 const TOP_K = 3;
@@ -52,7 +52,17 @@ export async function loadModel(): Promise<void> {
   isLoading = true;
   try {
     const tf = await loadTfjs();
-    modelInstance = await tf.loadLayersModel(MODEL_URL);
+    // Cache-busted URL to bypass Service Worker
+    const modelUrl = `/model/model.json?v=${Date.now()}`;
+    try {
+      modelInstance = await tf.loadLayersModel(modelUrl);
+    } catch (layersErr) {
+      console.warn("[KrishiVision] loadLayersModel failed, trying GraphModel...", layersErr);
+      // Fallback for Keras v3 format issue
+      const graphModel = await tf.loadGraphModel(modelUrl);
+      // Wrap graph model to match LayersModel interface
+      modelInstance = graphModel as unknown as import("@tensorflow/tfjs").LayersModel;
+    }
     // Warm up with a dummy tensor
     const dummy = tf.zeros([1, INPUT_SIZE, INPUT_SIZE, 3]);
     const warm = modelInstance.predict(dummy) as import("@tensorflow/tfjs").Tensor;
