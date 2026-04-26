@@ -3,7 +3,7 @@ import { useState, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, ScanLine, AlertCircle, RefreshCw, Upload, CheckCircle2, ChevronRight, AlertTriangle } from "lucide-react";
+import { Camera, ScanLine, AlertCircle, RefreshCw, Upload, CheckCircle2, ChevronRight, AlertTriangle, Phone, MessageCircle } from "lucide-react";
 import CameraView from "@/components/scan/CameraView";
 import DiagnosisCard from "@/components/scan/DiagnosisCard";
 import RemedyCard from "@/components/scan/RemedyCard";
